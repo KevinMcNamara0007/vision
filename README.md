@@ -20,3 +20,9 @@ uvicorn src.asgi:vision --host=127.0.0.1 --port=8080 --reload
 ### WEB PAGES
 - http://127.0.0.1:8080/vision/
 - http://127.0.0.1:8080/docs
+
+### Directories:
+- config - contains env settings will be needed for model paths
+- react - contains the web app files where you can modify react code
+- static - contains web build pack which is initialized on backend
+- src - contains backend python service and API(s)
