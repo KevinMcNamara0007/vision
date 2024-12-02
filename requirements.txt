@@ -1,0 +1,8 @@
+uvicorn
+starlette~=0.37.2
+python-dotenv~=1.0.1
+python-multipart
+requests~=2.32.3
+fastapi~=0.111.0
+pydantic~=2.7.3
+virtualenv
