@@ -7,6 +7,7 @@ import PIL
 from typing import List, Tuple
 import os
 import gdown
+from DAV2.metric_depth.depth_anything_v2.dpt import DepthAnythingV2
 
 ImageType = Union[
     torch.Tensor,     
@@ -15,14 +16,6 @@ ImageType = Union[
     str,              
     bytes              
 ]
-
-def download_weights():
-    id = '1y53MeW4ZVoZ7vz-N4dDwWqTCpUIKtctY'
-    download_path = 'weights/yolov11n-face.pt'
-    os.makedirs(os.path.dirname(download_path), exist_ok=True)
-    if not os.path.exists(download_path):
-        url = f'https://drive.google.com/uc?id={id}'
-        gdown.download(url, download_path, quiet=False)
 
 def process_image(image: ImageType) -> np.ndarray:
     if isinstance(image, str): 
@@ -45,73 +38,70 @@ def process_image(image: ImageType) -> np.ndarray:
     
     return image
 
-def init_yolo(download: bool=False) -> YOLO:
+def download_weights():
+    id = '17CjD-85mMkv1h7aK6hWsH3IxTvs5GXrn'
+    download_path = 'DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth'
+    os.makedirs(os.path.dirname(download_path), exist_ok=True)
+    if not os.path.exists(download_path):
+        url = f'https://drive.google.com/uc?id={id}'
+        gdown.download(url, download_path, quiet=False)
+
+def init_dav2(
+        device: torch.device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu'),
+        download: bool = False, 
+) -> DepthAnythingV2: 
+
     if download:
         download_weights()
-    model_path = "weights/yolov11n-face.pt"
-    return YOLO(model_path)
+
+    max_depth = 20
+
+    model_config = {'vits' : {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
+    depth_model = DepthAnythingV2(**{**model_config['vits'], 'max_depth': max_depth})
+    depth_model.load_state_dict(torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth', 
+                                            map_location=device, weights_only=True))
+    depth_model = depth_model.to(device).eval()
+    return depth_model
 
 @torch.no_grad()
-def compute_yolo(
+def compute_dav2(
     image: ImageType,
-    conf: float = 0.25,
-    device: torch.device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu'),
-    model: YOLO = None,
+    model: DepthAnythingV2 = None,
     download: bool=False,
     preprocess: bool=True,
 ) -> List[Tuple[int]]:
     
     '''
-        compute_yolo()
+        compute_dav2()
 
             input:
                 image: (REQUIRED) torch.Tensor (any shape), np.ndarray (any shape), 
                         PIL.Image.Image, str (path), bytes (base64)  
-                conf: (OPTIONAL) float - confidence level for YOLO
-                device: (OPTIONAL) torch.device('cuda') or torch.device('cpu')
-                model: (OPTIONAL) Creates YOLO model on the fly. For repeated calls, use init_yolo() THEN pass
+                model: (OPTIONAL) Creates DAV2 model on the fly. For repeated calls, use init_dav2() THEN pass
                         that model in as a paramter to avoid repeated initialization 
-                        model = init_yolo()
-                        compute_yolo(model = model)
+                        model = init_dav2()
+                        compute_dav2(model = model)
                 download: (OPTIONAL) bool - True or False if we need the weights
                 preprocess: (OPTIONAL) bool - True if we want to preprocess image, false if its already processed
             output:
-                bboxes: List[Tuple[int]], Returns a list of tuples which contain the bounding box
-                        coordinates. Their format is (x1, y1, x2, y2)
+                bboxes: 'numpy.ndarray': pixel map of distances from camera (unscaled) 
+                        
     '''
-    
-    def compute_bbox(result):
-        if len(result.boxes) == 0:
-            return None
-        boxes = result.boxes
-        confs = boxes.conf.cpu().numpy()
-        highest_conf_idx = np.argmax(confs)
-        box = boxes.xyxy[highest_conf_idx].cpu().numpy()
-        x1, y1, x2, y2 = map(int, box)
-        bbox = (x1, y1, x2, y2)
-        return bbox
-    
+
     if model is None:
-        model = init_yolo(download=download)
+        model = init_dav2(download=download)
     if preprocess:
         image = process_image(image)
+    depth_map = model.infer_image(image)
 
-    results = model(image, conf=conf, device=device, verbose=False)
-    bboxes = [compute_bbox(res) for res in results]
-
-    return bboxes
+    return depth_map
     
 def main():
-    # Examples: 
-    # (this code won't actually work because no faces in this, but typical example for imagenet)
-    # images = torch.randn((64, 3, 224, 224)), torch.randn((64, 224, 224, 3)), ANY SHAPE! :)
-    # model = init_yolo()
-    # bboxes = compute_yolo(images, model=model)
 
-    model = init_yolo(download=True)
+    model = init_dav2(download=False)
     path = 'example_image.jpg'
-    bboxes = compute_yolo(image=path, model=model)
-    print(bboxes)
+    depth_map = compute_dav2(image=path, model=model)
+    print(depth_map)
 
     # WORKS FOR ANY IMAGE 
     # ImageType = Union[
