@@ -1,5 +1,5 @@
-from distance_detection import compute_dav2, init_dav2, process_image
-from face_detection import compute_yolo, init_yolo
+from src.utilities.distance_detection import compute_dav2, init_dav2, process_image
+from src.utilities.face_detection import compute_yolo, init_yolo
 import cv2
 import numpy as np
 

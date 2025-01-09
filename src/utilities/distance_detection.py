@@ -40,7 +40,7 @@ def process_image(image: ImageType) -> np.ndarray:
 
 def download_weights():
     id = '17CjD-85mMkv1h7aK6hWsH3IxTvs5GXrn'
-    download_path = 'DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth'
+    download_path = 'models/depth_anything_v2_metric_hypersim_vits.pth'
     os.makedirs(os.path.dirname(download_path), exist_ok=True)
     if not os.path.exists(download_path):
         url = f'https://drive.google.com/uc?id={id}'
@@ -58,7 +58,7 @@ def init_dav2(
 
     model_config = {'vits' : {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
     depth_model = DepthAnythingV2(**{**model_config['vits'], 'max_depth': max_depth})
-    depth_model.load_state_dict(torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth', 
+    depth_model.load_state_dict(torch.load('models/depth_anything_v2_metric_hypersim_vits.pth',
                                             map_location=device, weights_only=True))
     depth_model = depth_model.to(device).eval()
     return depth_model
