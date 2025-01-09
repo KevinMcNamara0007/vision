@@ -6,6 +6,9 @@ const App = () => {
         { name: "Pepperoni Feast", price: "$12.99" },
         { name: "Veggie Supreme", price: "$11.99" },
     ]);
+    const [distance, setDistance] = useState("")
+    const [squint, setSquint] = useState("")
+    const [iris,setIris] = useState("")
     const [error, setError] = useState("");
     const [showCamera, setShowCamera] = useState(true);
     const [fontSize, setFontSize] = useState(16);
@@ -33,6 +36,19 @@ const App = () => {
 
         return () => clearInterval(intervalId);
     }, []);
+
+
+
+    const updateScreen = (distanceNumber) => {
+        if(distance !== ""){
+            try{
+                let newDistance = parseFloat(distanceNumber.replaceAll("cm"))
+                setFontSize(newDistance/3)
+            }catch(e){
+
+            }
+        }
+    }
 
     const captureAndSendImage = async () => {
         if (!videoRef.current || !canvasRef.current) {
@@ -71,6 +87,10 @@ const App = () => {
 
                 if (response.ok) {
                     const data = await response.json();
+                    updateScreen(data.distance)
+                    setDistance(data.distance)
+                    setSquint(data.squint)
+                    setIris(data.iris)
                     console.log("Response from API:", data);
                     return data;
                 } else {
@@ -145,6 +165,17 @@ const App = () => {
                 />
             )}
             <canvas ref={canvasRef} style={{display: "none"}}/>
+            <div className="box">
+                <p>
+                    <strong>Distance:</strong> {distance}
+                </p>
+                <p>
+                    <strong>Squint:</strong> {squint}
+                </p>
+                <p>
+                    <strong>Iris:</strong> {iris}
+                </p>
+            </div>
         </div>
     );
 };

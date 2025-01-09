@@ -68,3 +68,18 @@ footer button {
 footer button:hover {
   background: #e64a19;
 }
+
+.box{
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 10px;
+  background: black;
+  color: #e0e0e0;
+  borderRadius: 5px;
+  textAlign: left;
+  font-size: 20px;
+  width: 200px;
+  height: 200px;
+  border: 2px solid #e0e0e0;
+}
