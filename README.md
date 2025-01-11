@@ -3,7 +3,7 @@ Open Source repo demoing vision enablement in any digital surface
 
 # Distance Detection Model
 
-This model combines YOLO face detection with Depth Anything V2 to estimate distances to detected faces in images.
+This model combines YOLO face detection with Depth Anything V2 (finetuned on metric depth) to estimate distances to detected faces in images.
 
 ## Installation
 
@@ -20,15 +20,13 @@ The model accepts various input formats:
 - Torch Tensors
 - Bytes
 
-First initialize models once when the server spins up
-
+First initialize models (Call these only once on server startup)
 ```python
     yolo_model = init_yolo()
     depth_model = init_dav2()
 ```
 
-Then, simple compute to get output each time you want to call the model. It defaults to onnx model.
-
+Then, simple call compute_distance each time you want to call the model. Note: The model defaults to onnx. 
 ```python
     distance, _ = compute_distance(frame, yolo_model, depth_model)
 ```
