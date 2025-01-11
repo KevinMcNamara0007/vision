@@ -8,6 +8,7 @@ from typing import List, Tuple
 import os
 import gdown
 from DAV2.metric_depth.depth_anything_v2.dpt import DepthAnythingV2
+import onnxruntime
 
 ImageType = Union[
     torch.Tensor,     
@@ -49,58 +50,67 @@ def download_weights():
 def init_dav2(
         device: torch.device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu'),
         download: bool = False, 
+        use_onnx: bool = True,
 ) -> DepthAnythingV2: 
 
-    if download:
-        download_weights()
+    if use_onnx:
+        return onnxruntime.InferenceSession('onnx_models/dav2.onnx', providers=['CPUExecutionProvider'])
+    
+    else:
+        if download:
+            download_weights()
 
-    max_depth = 20
+        max_depth = 20
 
-    model_config = {'vits' : {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
-    depth_model = DepthAnythingV2(**{**model_config['vits'], 'max_depth': max_depth})
-    depth_model.load_state_dict(torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth', 
-                                            map_location=device, weights_only=True))
-    depth_model = depth_model.to(device).eval()
-    return depth_model
+        model_config = {'vits' : {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
+        depth_model = DepthAnythingV2(**{**model_config['vits'], 'max_depth': max_depth})
+        depth_model.load_state_dict(torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth', 
+                                                map_location=device, weights_only=True))
+        depth_model = depth_model.to(device).eval()
+        return depth_model
 
 @torch.no_grad()
-def compute_dav2(
+def compute_dav2_torch(
     image: ImageType,
     model: DepthAnythingV2 = None,
     download: bool=False,
     preprocess: bool=True,
 ) -> List[Tuple[int]]:
-    
-    '''
-        compute_dav2()
-
-            input:
-                image: (REQUIRED) torch.Tensor (any shape), np.ndarray (any shape), 
-                        PIL.Image.Image, str (path), bytes (base64)  
-                model: (OPTIONAL) Creates DAV2 model on the fly. For repeated calls, use init_dav2() THEN pass
-                        that model in as a paramter to avoid repeated initialization 
-                        model = init_dav2()
-                        compute_dav2(model = model)
-                download: (OPTIONAL) bool - True or False if we need the weights
-                preprocess: (OPTIONAL) bool - True if we want to preprocess image, false if its already processed
-            output:
-                bboxes: 'numpy.ndarray': pixel map of distances from camera (unscaled) 
-                        
-    '''
 
     if model is None:
         model = init_dav2(download=download)
     if preprocess:
         image = process_image(image)
-    depth_map = model.infer_image(image)
+    
+    else:
+        depth_map = model.infer_image(raw_image=image)
 
+    return depth_map
+    
+def compute_dav2_onnx(
+    image: ImageType,
+    preprocess: bool=True,
+    model: onnxruntime.InferenceSession = None,
+) -> List[Tuple[int]]:
+    
+    if model is None:
+        model = init_dav2(use_onnx=True)
+    if preprocess:
+        image = process_image(image)
+    
+    image = image.astype(np.float32)
+        
+    input_name = model.get_inputs()[0].name
+    input_data = {input_name: image}
+    
+    depth_map = model.run(None, input_data)[0]
     return depth_map
     
 def main():
 
-    model = init_dav2(download=False)
+    model = init_dav2(use_onnx=True)
     path = 'example_image.jpg'
-    depth_map = compute_dav2(image=path, model=model)
+    depth_map = compute_dav2_onnx(image=path, model=model)
     print(depth_map)
 
     # WORKS FOR ANY IMAGE 

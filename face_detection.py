@@ -24,6 +24,17 @@ def download_weights():
         url = f'https://drive.google.com/uc?id={id}'
         gdown.download(url, download_path, quiet=False)
 
+def compute_bbox(result):
+    if len(result.boxes) == 0:
+        return None
+    boxes = result.boxes
+    confs = boxes.conf.cpu().numpy()
+    highest_conf_idx = np.argmax(confs)
+    box = boxes.xyxy[highest_conf_idx].cpu().numpy()
+    x1, y1, x2, y2 = map(int, box)
+    bbox = (x1, y1, x2, y2)
+    return bbox
+
 def process_image(image: ImageType) -> np.ndarray:
     if isinstance(image, str): 
         image = cv2.imread(image)
@@ -45,12 +56,15 @@ def process_image(image: ImageType) -> np.ndarray:
     
     return image
 
-def init_yolo(download: bool=False) -> YOLO:
-    if download:
-        download_weights()
-    model_path = "weights/yolov11n-face.pt"
-    return YOLO(model_path)
+def init_yolo(download: bool=False, use_onnx: bool=True) -> YOLO:
 
+    if use_onnx:
+        return YOLO('onnx_models/yolov11n-face.onnx', task='detect')
+    else:
+        if download:
+            download_weights()
+        return YOLO('weights/yolov11n-face.pt')
+    
 @torch.no_grad()
 def compute_yolo(
     image: ImageType,
@@ -59,48 +73,22 @@ def compute_yolo(
     model: YOLO = None,
     download: bool=False,
     preprocess: bool=True,
+    use_onnx: bool=True,
 ) -> List[Tuple[int]]:
     
-    '''
-        compute_yolo()
-
-            input:
-                image: (REQUIRED) torch.Tensor (any shape), np.ndarray (any shape), 
-                        PIL.Image.Image, str (path), bytes (base64)  
-                conf: (OPTIONAL) float - confidence level for YOLO
-                device: (OPTIONAL) torch.device('cuda') or torch.device('cpu')
-                model: (OPTIONAL) Creates YOLO model on the fly. For repeated calls, use init_yolo() THEN pass
-                        that model in as a paramter to avoid repeated initialization 
-                        model = init_yolo()
-                        compute_yolo(model = model)
-                download: (OPTIONAL) bool - True or False if we need the weights
-                preprocess: (OPTIONAL) bool - True if we want to preprocess image, false if its already processed
-            output:
-                bboxes: List[Tuple[int]], Returns a list of tuples which contain the bounding box
-                        coordinates. Their format is (x1, y1, x2, y2)
-    '''
-    
-    def compute_bbox(result):
-        if len(result.boxes) == 0:
-            return None
-        boxes = result.boxes
-        confs = boxes.conf.cpu().numpy()
-        highest_conf_idx = np.argmax(confs)
-        box = boxes.xyxy[highest_conf_idx].cpu().numpy()
-        x1, y1, x2, y2 = map(int, box)
-        bbox = (x1, y1, x2, y2)
-        return bbox
-    
     if model is None:
-        model = init_yolo(download=download)
+        model = init_yolo(download=download, use_onnx=use_onnx)
     if preprocess:
         image = process_image(image)
 
-    results = model(image, conf=conf, device=device, verbose=False)
+    if use_onnx:
+        results = model(image, conf=conf, device='cpu',verbose=False)
+    else:
+        results = model(image, conf=conf, device=device, verbose=False)
     bboxes = [compute_bbox(res) for res in results]
 
     return bboxes
-    
+   
 def main():
     # Examples: 
     # (this code won't actually work because no faces in this, but typical example for imagenet)
