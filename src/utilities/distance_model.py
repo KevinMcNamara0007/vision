@@ -1,4 +1,4 @@
-from src.utilities.distance_detection import compute_dav2, init_dav2, process_image
+from src.utilities.distance_detection import compute_dav2_onnx, compute_dav2_torch, init_dav2, process_image
 from src.utilities.face_detection import compute_yolo, init_yolo
 import cv2
 import numpy as np
@@ -32,7 +32,7 @@ def get_eye_distance(cropped_depth):
     return np.median(center_region[~np.isnan(center_region)])
 
 
-def compute_distance(frame, yolo_model, depth_model):
+def compute_distance(frame, yolo_model, depth_model, use_onnx: bool = True):
     '''
         compute_distance()
 
@@ -51,7 +51,10 @@ def compute_distance(frame, yolo_model, depth_model):
     if bbox is None:
         return None, None
 
-    depth_map = compute_dav2(image=frame, model=depth_model, preprocess=False)
+    if use_onnx:
+        depth_map = compute_dav2_onnx(image=frame, model=depth_model, preprocess=False)
+    else:
+        depth_map = compute_dav2_torch(image=frame, model=depth_model, preprocess=False)
 
     cropped_depth = depth_map[bbox[1]:bbox[3], bbox[0]:bbox[2]]
     distance_measure = get_eye_distance(cropped_depth * 42.72)
