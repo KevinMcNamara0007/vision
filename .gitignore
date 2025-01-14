@@ -1,0 +1,15 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+.idea/
+react/package-lock.json
+src/__pycache__/
+src/controllers/__pycache__/
+src/services/__pycache__/
+images/
+example_image.jpg
+env/
+inference_env/
+__pycache__/
+src/utilities/weights/
+src/utilities/squinting/checkpoints/
+src/utilities/squinting/tensorboard_logs/
