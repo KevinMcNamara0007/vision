@@ -1,7 +1,6 @@
 # vision
 Open Source repo demoing vision enablement in any digital surface 
 
-<<<<<<< HEAD
 # Distance Detection Model
 
 This model combines YOLO face detection with Depth Anything V2 (finetuned on metric depth) to estimate distances to detected faces in images.
@@ -32,8 +31,6 @@ Then, simple call compute_distance each time you want to call the model. Note: T
     distance, _ = compute_distance(frame, yolo_model, depth_model)
 ```
 
-
-=======
 ## Installation
 #### requires
 - python >= 3.9
@@ -59,4 +56,3 @@ uvicorn src.asgi:vision --host=127.0.0.1 --port=8080 --reload
 - react - contains the web app files where you can modify react code
 - static - contains web build pack which is initialized on backend
 - src - contains backend python service and API(s)
->>>>>>> ae0942d7767c214817518460eb72ff8a8be284e5
