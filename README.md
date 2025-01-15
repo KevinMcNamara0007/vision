@@ -1,9 +1,9 @@
 # vision
 Open Source repo demoing vision enablement in any digital surface 
 
-# Distance Detection Model
+# AI Inferfence Engine Usage
 
-This model combines YOLO face detection with Depth Anything V2 (finetuned on metric depth) to estimate distances to detected faces in images.
+This model combines YOLO face detection with Depth Anything V2 (finetuned on metric depth) to estimate distances to detected faces in images. It also features a custom trained squinting detection model.
 
 ## Installation
 
@@ -22,13 +22,12 @@ The model accepts various input formats:
 
 First initialize models (Call these only once on server startup)
 ```python
-    yolo_model = init_yolo()
-    depth_model = init_dav2()
+    yolo_model, depth_model, squinting_model = init_models()
 ```
 
-Then, simple call compute_distance each time you want to call the model. Note: The model defaults to onnx. 
+Then, simple call compute_distance_engine each time you want to call the model. Note: The model defaults to onnx. 
 ```python
-    distance, _ = compute_distance(frame, yolo_model, depth_model)
+    distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
 ```
 
 ## Installation
