@@ -13,3 +13,4 @@ __pycache__/
 src/utilities/weights/
 src/utilities/squinting/checkpoints/
 src/utilities/squinting/tensorboard_logs/
+src/utilities/image.jpg

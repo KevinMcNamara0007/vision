@@ -3,7 +3,7 @@ import io
 from PIL import Image
 import numpy as np
 
-from src.utilities.distance_model import get_distance
+from src.utilities.inference_engine import get_inference_response
 
 async def evaluate_image_service(image):
     # Read the file contents
@@ -13,6 +13,6 @@ async def evaluate_image_service(image):
     # Convert to NumPy array
     frame = np.array(pil_image)
     # Pass the NumPy array to the `get_distance` function
-    distance = await get_distance(frame)
+    distance, pred = await get_inference_response(frame)
 
-    return {"distance": distance, "squint": 1, "iris": 1}
+    return {"distance": distance, "squint": pred, "iris": 1}

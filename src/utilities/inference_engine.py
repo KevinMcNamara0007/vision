@@ -83,9 +83,9 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 def init_models():
-    yolo_model = YOLO('../../models/yolov11n-face.onnx', task='detect')
-    depth_model = onnxruntime.InferenceSession('../../models/dav2.onnx', providers=['CPUExecutionProvider'])
-    squinting_model = onnxruntime.InferenceSession('../../models/squint_detector.onnx', providers=['CPUExecutionProvider'])
+    yolo_model = YOLO('models/yolov11n-face.onnx', task='detect')
+    depth_model = onnxruntime.InferenceSession('models/dav2.onnx', providers=['CPUExecutionProvider'])
+    squinting_model = onnxruntime.InferenceSession('models/squint_detector.onnx', providers=['CPUExecutionProvider'])
     return yolo_model, depth_model, squinting_model
 
 def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
@@ -122,6 +122,12 @@ def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
 
     # Return Distance and Squinting Prediction
     return distance_measure, pred
+
+async def get_inference_response(image):
+    yolo_model, depth_model, squinting_model = init_models()
+    frame = image
+    distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
+    return float(distance), float(pred)
 
 def main():
     yolo_model, depth_model, squinting_model = init_models()
