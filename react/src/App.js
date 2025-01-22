@@ -87,9 +87,9 @@ const App = () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    updateScreen(data.distance)
-                    setDistance(data.distance)
-                    setSquint(data.squint)
+                    updateScreen(data.distance.toFixed(4))
+                    setDistance(data.distance.toFixed(4))
+                    setSquint(data.squint.toFixed(4))
                     setIris(data.iris)
                     console.log("Response from API:", data);
                     return data;
