@@ -40,13 +40,12 @@ const App = () => {
 
 
     const updateScreen = (distanceNumber) => {
-        if(distance !== ""){
-            try{
-                let newDistance = parseFloat(distanceNumber.replaceAll("cm"))
-                setFontSize(newDistance/3)
-            }catch(e){
-
-            }
+        try{
+            let newDistance = parseFloat(distanceNumber.replaceAll("cm"))
+            console.log("Was able to parse float")
+            setFontSize(newDistance/3)
+        }catch(e){
+            console.log("Unable to configure new font size")
         }
     }
 
