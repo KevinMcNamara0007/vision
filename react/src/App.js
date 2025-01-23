@@ -4,38 +4,48 @@ const App = () => {
     const randomTechArticlesToday = [
         {
             title: "Google’s New AI Model Surpasses Expectations",
-            description: "Tech enthusiasts are buzzing about Google's latest AI breakthrough, saying it could revolutionize search as we know it.",
+            description:
+                "Tech enthusiasts are buzzing about Google's latest AI breakthrough, saying it could revolutionize search as we know it.",
             url: "https://news.google.com/articles/example-url-1",
             source: "Google News",
-            publishedAt: "2025-01-23T09:45:00Z"
+            publishedAt: "2025-01-23T09:45:00Z",
+            imageUrl: "https://picsum.photos/400/600?random=1"
         },
         {
             title: "Chromebooks Get Major Battery Life Upgrade",
-            description: "A new update promises to extend battery life on most Chromebooks by up to 20%, a significant leap for on-the-go users.",
+            description:
+                "A new update promises to extend battery life on most Chromebooks by up to 20%.",
             url: "https://news.google.com/articles/example-url-2",
             source: "Google News",
-            publishedAt: "2025-01-23T10:20:00Z"
+            publishedAt: "2025-01-23T10:20:00Z",
+            imageUrl: "https://picsum.photos/400/600?random=2"
         },
         {
             title: "Google Announces Quantum Computing Partnership",
-            description: "Collaborating with top tech giants, Google aims to build a quantum ecosystem that will shape the future of cryptography.",
+            description:
+                "Collaborating with top tech giants, Google aims to build a quantum ecosystem that will shape the future of cryptography.",
             url: "https://news.google.com/articles/example-url-3",
             source: "Google News",
-            publishedAt: "2025-01-23T11:05:00Z"
+            publishedAt: "2025-01-23T11:05:00Z",
+            imageUrl: "https://picsum.photos/400/600?random=3"
         },
         {
             title: "Cloud Gaming Services See Rapid Growth",
-            description: "Recent reports show cloud gaming usage skyrocketing, with Google Stadia updates being a key driver for new adopters.",
+            description:
+                "Recent reports show cloud gaming usage skyrocketing, with Google Stadia updates being a key driver for new adopters.",
             url: "https://news.google.com/articles/example-url-4",
             source: "Google News",
-            publishedAt: "2025-01-23T11:50:00Z"
+            publishedAt: "2025-01-23T11:50:00Z",
+            imageUrl: "https://picsum.photos/400/600?random=4"
         },
         {
             title: "Google to Launch Updated Smart Home Devices",
-            description: "The next generation of Google Nest products promises better integration, voice recognition, and security features.",
+            description:
+                "The next generation of Google Nest products promises better integration, voice recognition, and security features.",
             url: "https://news.google.com/articles/example-url-5",
             source: "Google News",
-            publishedAt: "2025-01-23T12:15:00Z"
+            publishedAt: "2025-01-23T12:15:00Z",
+            imageUrl: "https://picsum.photos/400/600?random=5"
         }
     ];
 
@@ -142,11 +152,18 @@ const App = () => {
         <div
             style={{...themeStyles, backgroundColor: "#121212", color: "#e0e0e0", minHeight: "100vh", padding: "1rem"}}>
             <div className="random-tech-articles-container">
-                <h1>Random Google Tech Articles Today</h1>
+                <h1>Tech Articles Today</h1>
                 <ul className="articles-list">
                     {randomTechArticlesToday.map((article, index) => (
                         <li key={index} className="article-item">
                             <h2>{article.title}</h2>
+                            {article.imageUrl && (
+                                <img
+                                    src={article.imageUrl}
+                                    alt={article.title}
+                                    className="article-image"
+                                />
+                            )}
                             <p>{article.description}</p>
                             <a href={article.url} target="_blank" rel="noopener noreferrer">
                                 Read more
