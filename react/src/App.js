@@ -49,9 +49,9 @@ const App = () => {
         }
     ];
 
-    const [distance, setDistance] = useState("")
-    const [squint, setSquint] = useState("")
-    const [iris,setIris] = useState("")
+    const [distance, setDistance] = useState(1.0)
+    const [squint, setSquint] = useState(0.50)
+    const [iris,setIris] = useState(1.0)
     const [error, setError] = useState("");
     const [showCamera, setShowCamera] = useState(true);
     const [fontSize, setFontSize] = useState(16);
@@ -60,7 +60,6 @@ const App = () => {
 
     useEffect(() => {
         const videoElement = videoRef.current;
-        console.log("here 1")
         navigator.mediaDevices
             .getUserMedia({ video: true })
             .then((stream) => {
@@ -70,9 +69,7 @@ const App = () => {
                 setError("Unable to access the camera.");
                 console.error("Camera error:", err);
             });
-        console.log("here 2")
         const intervalId = setInterval(() => {
-            console.log("here 3")
             let response = captureAndSendImage();
             console.log(response)
         }, 6000);
@@ -81,14 +78,50 @@ const App = () => {
     }, []);
 
 
-
-    const updateScreen = (distanceNumber) => {
+    let lastDistance = 1.0
+    let lastSquint = 0.001
+    const updateScreen = (distanceNumber, squintNumber) => {
+        let size = fontSize
         try{
             let newDistance = parseFloat(distanceNumber.replaceAll("cm"))
-            console.log("Was able to parse float")
-            setFontSize(newDistance/3)
+            console.log("Was able to parse float distance")
+            let lowerDistance = lastDistance * 0.8;
+            let higherDistance = lastDistance * 1.2;
+            if(lowerDistance < newDistance && newDistance < higherDistance){
+                console.log(lowerDistance)
+                console.log(newDistance)
+                console.log("Distance within 20% of last distance")
+            }else{
+                size = newDistance/3
+                if(size < 18.0){
+                    size = 18.0
+                }else if(size > 32){
+                    size = 32.0
+                }
+                lastDistance = newDistance
+                console.log(size)
+                setFontSize(size)
+            }
         }catch(e){
-            console.log("Unable to configure new font size")
+            console.log("Unable to configure new font size for distance"+e)
+        }
+        try{
+            let newSquint = parseFloat(squintNumber.replaceAll("cm"))
+            console.log("was able to parse float squint")
+            let lowerSquint = lastSquint * 0.8;
+            let higherSquint = lastSquint * 1.2;
+            if(lowerSquint < newSquint < higherSquint){
+                console.log("Squint within 20% of last squint")
+            }else{
+                if(newSquint < squint){
+                    setFontSize(size + 2.0)
+                }else{
+                    setFontSize(size - 2.0)
+                }
+                lastSquint = newSquint;
+            }
+        }catch(e){
+            console.log("Unable to configure new font size for squint\n" + e)
         }
     }
 
@@ -129,10 +162,10 @@ const App = () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    updateScreen(data.distance.toFixed(4))
                     setDistance(data.distance.toFixed(4))
                     setSquint(data.squint.toFixed(4))
                     setIris(data.iris)
+                    updateScreen(data.distance.toFixed(4), data.squint.toFixed(4))
                     console.log("Response from API:", data);
                     return data;
                 } else {
