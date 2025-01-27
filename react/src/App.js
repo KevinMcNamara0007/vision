@@ -9,7 +9,7 @@ const App = () => {
             url: "https://news.google.com/articles/example-url-1",
             source: "Google News",
             publishedAt: "2025-01-23T09:45:00Z",
-            imageUrl: "https://picsum.photos/400/600?random=1"
+            imageUrl: "https://picsum.photos/800/1200?random=1"
         },
         {
             title: "Chromebooks Get Major Battery Life Upgrade",
@@ -18,7 +18,7 @@ const App = () => {
             url: "https://news.google.com/articles/example-url-2",
             source: "Google News",
             publishedAt: "2025-01-23T10:20:00Z",
-            imageUrl: "https://picsum.photos/400/600?random=2"
+            imageUrl: "https://picsum.photos/800/1200?random=2"
         },
         {
             title: "Google Announces Quantum Computing Partnership",
@@ -27,7 +27,7 @@ const App = () => {
             url: "https://news.google.com/articles/example-url-3",
             source: "Google News",
             publishedAt: "2025-01-23T11:05:00Z",
-            imageUrl: "https://picsum.photos/400/600?random=3"
+            imageUrl: "https://picsum.photos/800/1200?random=3"
         },
         {
             title: "Cloud Gaming Services See Rapid Growth",
@@ -36,7 +36,7 @@ const App = () => {
             url: "https://news.google.com/articles/example-url-4",
             source: "Google News",
             publishedAt: "2025-01-23T11:50:00Z",
-            imageUrl: "https://picsum.photos/400/600?random=4"
+            imageUrl: "https://picsum.photos/800/1200?random=4"
         },
         {
             title: "Google to Launch Updated Smart Home Devices",
@@ -45,7 +45,7 @@ const App = () => {
             url: "https://news.google.com/articles/example-url-5",
             source: "Google News",
             publishedAt: "2025-01-23T12:15:00Z",
-            imageUrl: "https://picsum.photos/400/600?random=5"
+            imageUrl: "https://picsum.photos/800/1200?random=5"
         }
     ];
 
