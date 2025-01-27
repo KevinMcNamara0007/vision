@@ -1,9 +1,6 @@
 import io
-
 from PIL import Image
 import numpy as np
-
-from src.utilities.distance_model import get_distance
 from src.utilities.inference_engine import get_inference_response
 
 

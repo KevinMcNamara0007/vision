@@ -1,22 +1,24 @@
-from ultralytics import YOLO
 import cv2
 import torch
 import numpy as np
-from typing import Any, Union
-import PIL
+from typing import Union
+from PIL import Image
 from typing import List, Tuple
 import os
 import gdown
+from onnxruntime import InferenceSession
+
 from DAV2.metric_depth.depth_anything_v2.dpt import DepthAnythingV2
 import onnxruntime
 
 ImageType = Union[
     torch.Tensor,
     np.ndarray,
-    PIL.Image.Image,
+    Image.Image,
     str,
     bytes
 ]
+
 
 def process_image(image: ImageType) -> np.ndarray:
     if isinstance(image, str):
@@ -28,9 +30,9 @@ def process_image(image: ImageType) -> np.ndarray:
     elif isinstance(image, torch.Tensor):
         image = image.numpy()
 
-    if len(image.shape) == 4 and image.shape[1] in [1,3,4]:
+    if len(image.shape) == 4 and image.shape[1] in [1, 3, 4]:
         image = np.transpose(image, (0, 2, 3, 1))
-    elif len(image.shape) == 3 and image.shape[0] in [1,3,4]:
+    elif len(image.shape) == 3 and image.shape[0] in [1, 3, 4]:
         image = np.transpose(image, (1, 2, 0))
 
     if len(image.shape) == 4:
@@ -38,6 +40,7 @@ def process_image(image: ImageType) -> np.ndarray:
         image = [img.squeeze(0) for img in image]
 
     return image
+
 
 def download_weights():
     id = '17CjD-85mMkv1h7aK6hWsH3IxTvs5GXrn'
@@ -47,14 +50,14 @@ def download_weights():
         url = f'https://drive.google.com/uc?id={id}'
         gdown.download(url, download_path, quiet=False)
 
+
 def init_dav2(
         device: torch.device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu'),
         download: bool = False,
         use_onnx: bool = True,
 ) -> DepthAnythingV2:
-
     if use_onnx:
-        return onnxruntime.InferenceSession('models/dav2.onnx', providers=['CPUExecutionProvider'])
+        return InferenceSession('models/dav2.onnx', providers=onnxruntime.get_available_providers())
 
     else:
         if download:
@@ -62,21 +65,22 @@ def init_dav2(
 
         max_depth = 20
 
-        model_config = {'vits' : {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
+        model_config = {'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
         depth_model = DepthAnythingV2(**{**model_config['vits'], 'max_depth': max_depth})
-        depth_model.load_state_dict(torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth',
-                                               map_location=device, weights_only=True))
+        depth_model.load_state_dict(
+            torch.load('DAV2/metric_depth/checkpoints/depth_anything_v2_metric_hypersim_vits.pth',
+                       map_location=device, weights_only=True))
         depth_model = depth_model.to(device).eval()
         return depth_model
+
 
 @torch.no_grad()
 def compute_dav2_torch(
         image: ImageType,
         model: DepthAnythingV2 = None,
-        download: bool=False,
-        preprocess: bool=True,
+        download: bool = False,
+        preprocess: bool = True,
 ) -> List[Tuple[int]]:
-
     if model is None:
         model = init_dav2(download=download)
     if preprocess:
@@ -87,12 +91,12 @@ def compute_dav2_torch(
 
     return depth_map
 
+
 def compute_dav2_onnx(
         image: ImageType,
-        preprocess: bool=True,
+        preprocess: bool = True,
         model: onnxruntime.InferenceSession = None,
 ) -> List[Tuple[int]]:
-
     if model is None:
         model = init_dav2(use_onnx=True)
     if preprocess:

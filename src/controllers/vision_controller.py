@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Form, BackgroundTasks, UploadFile, File
-import os
+from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from src.services.vision_services import evaluate_image_service

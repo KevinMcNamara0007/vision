@@ -1,23 +1,19 @@
-import cv2
-import numpy as np
 from ultralytics import YOLO
 import cv2
 import torch
 import numpy as np
-from typing import Any, Union
-import PIL
-from typing import List, Tuple
-import os
-import gdown
+from typing import Union
+from PIL import Image
 import onnxruntime
 
 ImageType = Union[
     torch.Tensor,
     np.ndarray,
-    PIL.Image.Image,
+    Image.Image,
     str,
     bytes
 ]
+
 
 def process_image(image: ImageType) -> np.ndarray:
     if isinstance(image, str):
@@ -29,9 +25,9 @@ def process_image(image: ImageType) -> np.ndarray:
     elif isinstance(image, torch.Tensor):
         image = image.numpy()
 
-    if len(image.shape) == 4 and image.shape[1] in [1,3,4]:
+    if len(image.shape) == 4 and image.shape[1] in [1, 3, 4]:
         image = np.transpose(image, (0, 2, 3, 1))
-    elif len(image.shape) == 3 and image.shape[0] in [1,3,4]:
+    elif len(image.shape) == 3 and image.shape[0] in [1, 3, 4]:
         image = np.transpose(image, (1, 2, 0))
 
     if len(image.shape) == 4:
@@ -39,6 +35,7 @@ def process_image(image: ImageType) -> np.ndarray:
         image = [img.squeeze(0) for img in image]
 
     return image
+
 
 def compute_bbox(result):
     if len(result.boxes) == 0:
@@ -51,8 +48,8 @@ def compute_bbox(result):
     bbox = (x1, y1, x2, y2)
     return bbox
 
-def get_eye_distance(cropped_depth):
 
+def get_eye_distance(cropped_depth):
     depth_gray = (cropped_depth * 255).astype(np.uint8)
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
@@ -61,13 +58,13 @@ def get_eye_distance(cropped_depth):
         scaleFactor=1.05,
         minNeighbors=3,
         minSize=(10, 10),
-        maxSize=(cropped_depth.shape[1]//2, cropped_depth.shape[0]//2)
+        maxSize=(cropped_depth.shape[1] // 2, cropped_depth.shape[0] // 2)
     )
 
     eye_distances = []
     for (ex, ey, ew, eh) in eyes:
-        eye_center_x = ex + ew//2
-        eye_center_y = ey + eh//2
+        eye_center_x = ex + ew // 2
+        eye_center_y = ey + eh // 2
         eye_depth = cropped_depth[eye_center_y, eye_center_x]
         if not np.isnan(eye_depth):
             eye_distances.append(eye_depth)
@@ -76,25 +73,27 @@ def get_eye_distance(cropped_depth):
         return np.mean(eye_distances)
 
     h, w = cropped_depth.shape
-    center_region = cropped_depth[h//3:2*h//3, w//3:2*w//3]
+    center_region = cropped_depth[h // 3:2 * h // 3, w // 3:2 * w // 3]
     return np.median(center_region[~np.isnan(center_region)])
+
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
 def init_models():
     yolo_model = YOLO('models/yolov11n-face.onnx', task='detect')
-    depth_model = onnxruntime.InferenceSession('models/dav2.onnx', providers=['CPUExecutionProvider'])
-    squinting_model = onnxruntime.InferenceSession('models/squint_detector.onnx', providers=['CPUExecutionProvider'])
+    depth_model = onnxruntime.InferenceSession('models/dav2.onnx', providers=onnxruntime.get_available_providers())
+    squinting_model = onnxruntime.InferenceSession('models/squint_detector.onnx', providers=onnxruntime.get_available_providers())
     return yolo_model, depth_model, squinting_model
 
-def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
 
+def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
     # Process Image
     image = process_image(image)
 
     # Compute YOLO Model
-    yolo_results = yolo_model(image, conf=0.25, device='cpu',verbose=False)
+    yolo_results = yolo_model(image, conf=0.25, device='cpu', verbose=False)
     bboxes = [compute_bbox(res) for res in yolo_results]
     if bboxes is None:
         return None, None
@@ -106,7 +105,7 @@ def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
     input_data = {input_name: image}
     depth_map = depth_model.run(None, input_data)[0]
     cropped_depth = depth_map[bbox[1]:bbox[3], bbox[0]:bbox[2]]
-    distance_measure = get_eye_distance(cropped_depth*42.72)
+    distance_measure = get_eye_distance(cropped_depth * 42.72)
 
     # Compute Squinting Model
     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -123,17 +122,20 @@ def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
     # Return Distance and Squinting Prediction
     return distance_measure, pred
 
+
 async def get_inference_response(image):
     yolo_model, depth_model, squinting_model = init_models()
     frame = image
     distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
     return float(distance), float(pred)
 
+
 def main():
     yolo_model, depth_model, squinting_model = init_models()
     frame = cv2.imread('image.jpg')
     distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
     print(distance, pred)
+
 
 if __name__ == '__main__':
     main()
