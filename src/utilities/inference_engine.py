@@ -124,18 +124,19 @@ def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
 
 
 async def get_inference_response(image):
-    yolo_model, depth_model, squinting_model = init_models()
     frame = image
-    distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
+    distance, pred = compute_inference_engine(frame, yolo_model_instance, depth_model_instance, squinting_model_instance)
     return float(distance), float(pred)
 
 
-def main():
-    yolo_model, depth_model, squinting_model = init_models()
-    frame = cv2.imread('image.jpg')
-    distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
-    print(distance, pred)
+yolo_model_instance, depth_model_instance, squinting_model_instance = init_models()
 
 
-if __name__ == '__main__':
-    main()
+# def main():
+#     frame = cv2.imread('image.jpg')
+#     distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
+#     print(distance, pred)
+#
+#
+# if __name__ == '__main__':
+#     main()
