@@ -70,24 +70,12 @@ const App = () => {
                 console.error("Camera error:", err);
             });
         const intervalId = setInterval( () => {
-            let data = captureAndSendImage("distance");
+            let data = captureAndSendImage();
             console.log(data)
-        }, 6000);
-
-        return () => {
-            clearInterval(intervalId)
-        }
-    }, []);
-
-    useEffect(() => {
-
-        const intervalId2 = setInterval(async () => {
-            let data = await captureAndSendImage("squint");
-
         }, 3000);
 
         return () => {
-            clearInterval(intervalId2)
+            clearInterval(intervalId)
         }
     }, []);
 
@@ -144,7 +132,7 @@ const App = () => {
         }
     }
 
-    const captureAndSendImage = async (type) => {
+    const captureAndSendImage = async () => {
         if (!videoRef.current || !canvasRef.current) {
             console.error("Video or canvas reference is missing.");
             return;
@@ -183,10 +171,9 @@ const App = () => {
                     const data = await response.json();
                     setIris(data.iris)
                     console.log("Response from API:", data);
-                    if(type === "distance"){
+                    try{
                         setDistance(data.distance.toFixed(4))
                         updateDistance(data.distance.toFixed(4))
-                    }else if(type === "squint"){
                         if(squint1 === 0.0){
                             console.log("Here ")
                             squint1 = data.squint.toFixed(4)
@@ -199,6 +186,8 @@ const App = () => {
                             squint1 = 0.0
                             squint2 = 0.0
                         }
+                    }catch (e) {
+                        console.log("Could not change values")
                     }
                     return data;
                 } else {
