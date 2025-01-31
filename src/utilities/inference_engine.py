@@ -10,6 +10,7 @@ from typing import List, Tuple
 import os
 import gdown
 import onnxruntime
+import multiprocessing as mp
 
 ImageType = Union[
     torch.Tensor,     
@@ -88,6 +89,26 @@ def init_models():
     squinting_model = onnxruntime.InferenceSession('models/squint_detector.onnx', providers=['CPUExecutionProvider'])
     return yolo_model, depth_model, squinting_model
 
+def compute_depth(image, depth_model, bbox):
+    image = image.astype(np.float32)
+    input_name = depth_model.get_inputs()[0].name
+    input_data = {input_name: image}
+    depth_map = depth_model.run(None, input_data)[0]
+    cropped_depth = depth_map[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+    return get_eye_distance(cropped_depth * 42.72)
+
+def compute_squinting(image, squinting_model, bbox):
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    image = image[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+    image = cv2.resize(image, (256, 256))
+    image = image[np.newaxis, np.newaxis, ...]
+    image = image.astype(np.float32) / 255.0
+    mean, std = 0.395, 0.189
+    image = (image - mean) / std
+    input_name = squinting_model.get_inputs()[0].name
+    input_data = {input_name: image}
+    return sigmoid(squinting_model.run(None, input_data)[0][0][0])
+
 def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
 
     # Process Image
@@ -100,25 +121,9 @@ def compute_inference_engine(image, yolo_model, depth_model, squinting_model):
         return None, None
     bbox = bboxes[0]
 
-    # Compute Depth Model
-    image = image.astype(np.float32)
-    input_name = depth_model.get_inputs()[0].name
-    input_data = {input_name: image}
-    depth_map = depth_model.run(None, input_data)[0]
-    cropped_depth = depth_map[bbox[1]:bbox[3], bbox[0]:bbox[2]]
-    distance_measure = get_eye_distance(cropped_depth*42.72)
-
-    # Compute Squinting Model
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    image = image[bbox[1]:bbox[3], bbox[0]:bbox[2]]
-    image = cv2.resize(image, (256, 256))
-    image = image[np.newaxis, np.newaxis, ...]
-    image = image.astype(np.float32) / 255.0
-    mean, std = 0.395, 0.189
-    image = (image - mean) / std
-    input_name = squinting_model.get_inputs()[0].name
-    input_data = {input_name: image}
-    pred = sigmoid(squinting_model.run(None, input_data)[0][0][0])
+    with mp.Pool(processes=2) as pool:
+        distance_measure = pool.apply_async(compute_depth, (image, depth_model, bbox))
+        pred = pool.apply_async(compute_squinting, (image, squinting_model, bbox))
 
     # Return Distance and Squinting Prediction
     return distance_measure, pred
@@ -130,10 +135,14 @@ async def get_inference_response(image):
     return float(distance), float(pred)
 
 def main():
+    import time
+    s = time.time()
     yolo_model, depth_model, squinting_model = init_models()
     frame = cv2.imread('image.jpg')
     distance, pred = compute_inference_engine(frame, yolo_model, depth_model, squinting_model)
     print(distance, pred)
+    e = time.time()
+    print(e-s)
 
 if __name__ == '__main__':
     main()
