@@ -9,3 +9,4 @@ starlette
 torch
 ultralytics
 gdown
+uvicorn
